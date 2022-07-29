@@ -1,8 +1,9 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
+import { useMouseState } from "../utils/useMouseState";
 
 type Square = {
 	isBlack: boolean;
@@ -10,24 +11,58 @@ type Square = {
 	letter: string;
 };
 
-const initSquares: Square[] = Array(225);
+const initSquares: Square[] = [];
 for (let i = 0; i < 225; i++) {
-	const blankSquare = { isBlack: false, num: null, letter: " " };
+	const blankSquare: Square = { isBlack: false, num: null, letter: " " };
 	initSquares.push(blankSquare);
 }
 
-const squareReducer = (state: Square[], action: any) => {
+type SquareReducerActionTypes =
+	| { type: "toggleColor"; payload: { id: number } }
+	| { type: "reset" };
+
+const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
 	switch (action.type) {
+		case "toggleColor": {
+			const newState = cloneDeep(state);
+
+			const id = action.payload.id;
+
+			newState[id]!.isBlack = !state[id]?.isBlack;
+
+			if (id !== 112) {
+				newState[224 - id]!.isBlack = !state[224 - id]?.isBlack;
+			}
+
+			return newState;
+		}
 		case "reset": {
 			return initSquares;
 		}
-		default:
-			throw new Error("That's not something you can do.");
 	}
 };
 
 const Editor: NextPage = () => {
 	const [squares, setSquares] = useReducer(squareReducer, initSquares);
+	const [editorMode, setEditorMode] = useState("Color");
+	const [targetColor, setTargetColor] = useState(false);
+
+	const { isMouseDown } = useMouseState();
+
+	const handleMouseEvent = (id: number, click: boolean) => {
+		if (editorMode === "Color") {
+			const square = squares[id];
+
+			if (click) setTargetColor(!square?.isBlack);
+
+			const isOppColor = square?.isBlack !== targetColor;
+
+			if (click || (isMouseDown && isOppColor)) {
+				setSquares({ type: "toggleColor", payload: { id } });
+				console.log("fired");
+			}
+		}
+	};
 
 	return (
 		<>
@@ -38,7 +73,10 @@ const Editor: NextPage = () => {
 			</Head>
 
 			<main className="container mx-auto h-screen p-4">
-				<Board squares={squares}></Board>
+				<h1 className="border border-black border-solid text-center">
+					{isMouseDown ? <div>Mouse Down</div> : <div>Mouse Up</div>}
+				</h1>
+				<Board squares={squares} handleMouseEvent={handleMouseEvent}></Board>
 				<Dashboard></Dashboard>
 			</main>
 		</>
@@ -47,9 +85,10 @@ const Editor: NextPage = () => {
 
 type BoardProps = {
 	squares: Square[];
+	handleMouseEvent: (id: number, click: boolean) => void;
 };
 
-const Board = ({ squares }: BoardProps) => {
+const Board = ({ squares, handleMouseEvent }: BoardProps) => {
 	const getSquareStyle = (i: number) => {
 		return cn({
 			"w-full h-full outline outline-1 outline-black font-bold": true,
@@ -62,11 +101,17 @@ const Board = ({ squares }: BoardProps) => {
 
 	return (
 		<div className="w-[450px] h-[450px] grid grid-cols-15">
-			{squares.map((square, index) => {
+			{squares.map((square, id) => {
 				return (
-					<div key={index}>
-						<p className="absolute text-[10px] p-0 ml-[0.1rem]"></p>
-						<button className={getSquareStyle(index)}></button>
+					<div key={id}>
+						<p className="absolute text-[10px] p-0 ml-[0.1rem]">{square.num}</p>
+						<button
+							className={getSquareStyle(id)}
+							onMouseDown={() => handleMouseEvent(id, true)}
+							onMouseOver={() => handleMouseEvent(id, false)}
+						>
+							{square.letter}
+						</button>
 					</div>
 				);
 			})}
