@@ -25,7 +25,6 @@ const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
 	switch (action.type) {
 		case "toggleColor": {
 			const newState = cloneDeep(state);
-
 			const id = action.payload.id;
 
 			newState[id]!.isBlack = !state[id]?.isBlack;
@@ -49,6 +48,7 @@ const Editor: NextPage = () => {
 
 	const { isMouseDown } = useMouseState();
 
+	//TODO Colors skip squares when the mouse moves too fast.
 	const handleMouseEvent = (id: number, click: boolean) => {
 		if (editorMode === "Color") {
 			const square = squares[id];
@@ -59,8 +59,13 @@ const Editor: NextPage = () => {
 
 			if (click || (isMouseDown && isOppColor)) {
 				setSquares({ type: "toggleColor", payload: { id } });
-				console.log("fired");
 			}
+		}
+	};
+
+	const handleDashboardEvent = (type: "reset") => {
+		if (type === "reset") {
+			setSquares({ type: "reset" });
 		}
 	};
 
@@ -72,12 +77,12 @@ const Editor: NextPage = () => {
 				{/* <link rel="icon" href="/favicon.ico" /> */}
 			</Head>
 
-			<main className="container mx-auto h-screen p-4">
-				<h1 className="border border-black border-solid text-center">
-					{isMouseDown ? <div>Mouse Down</div> : <div>Mouse Up</div>}
-				</h1>
-				<Board squares={squares} handleMouseEvent={handleMouseEvent}></Board>
-				<Dashboard></Dashboard>
+			<main className="container mx-auto h-screen flex justify-center p-4">
+				<div className="flex items-center justify-center">
+					<Board squares={squares} handleMouseEvent={handleMouseEvent}></Board>
+					<div className="w-8"></div>
+					<Dashboard handleDashboardEvent={handleDashboardEvent}></Dashboard>
+				</div>
 			</main>
 		</>
 	);
@@ -119,8 +124,21 @@ const Board = ({ squares, handleMouseEvent }: BoardProps) => {
 	);
 };
 
-const Dashboard = () => {
-	return <></>;
+type DashboardProps = {
+	handleDashboardEvent: (type: "reset") => void;
+};
+
+const Dashboard = ({ handleDashboardEvent }: DashboardProps) => {
+	return (
+		<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow">
+			<button
+				className="text-lg font-quicksand"
+				onClick={() => handleDashboardEvent("reset")}
+			>
+				Reset
+			</button>
+		</div>
+	);
 };
 
 export default Editor;
