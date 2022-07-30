@@ -131,12 +131,16 @@ type DashboardProps = {
 const Dashboard = ({ handleDashboardEvent }: DashboardProps) => {
 	return (
 		<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow">
-			<button
-				className="text-lg font-quicksand"
-				onClick={() => handleDashboardEvent("reset")}
-			>
-				Reset
-			</button>
+			<div className="text-xl font-quicksand flex">
+				<button
+					className="border-b border-gray-700"
+					onClick={() => handleDashboardEvent("reset")}
+				>
+					Reset
+				</button>
+				<div className="w-5"></div>
+				<button className="border-b border-gray-700">Add Numbers</button>
+			</div>
 		</div>
 	);
 };
