@@ -4,7 +4,10 @@ import { useEffect, useReducer, useState } from "react";
 import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
 import { useMouseState } from "../utils/useMouseState";
+import { type } from "os";
+import { isBoolean } from "lodash";
 
+// Visual state ----------------------------------------------------------------
 type Square = {
 	isBlack: boolean;
 	num: number | null;
@@ -19,13 +22,15 @@ for (let i = 0; i < 225; i++) {
 
 type SquareReducerActionTypes =
 	| { type: "toggleColor"; payload: { id: number } }
+	| { type: "changeNumber"; payload: { id: number; newNum: number } }
+	| { type: "changeLetter"; payload: { id: number; newLetter: string } }
 	| { type: "reset" };
 
 const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
 	switch (action.type) {
 		case "toggleColor": {
 			const newState = cloneDeep(state);
-			const id = action.payload.id;
+			const { id } = action.payload;
 
 			newState[id]!.isBlack = !state[id]?.isBlack;
 
@@ -35,18 +40,33 @@ const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
 
 			return newState;
 		}
+		case "changeNumber": {
+			const newState = cloneDeep(state);
+			const { id, newNum } = action.payload;
+
+			newState[id]!.num = newNum;
+			return newState;
+		}
+		case "changeLetter": {
+			const newState = cloneDeep(state);
+			const { id, newLetter } = action.payload;
+
+			newState[id]!.letter = newLetter;
+			return newState;
+		}
 		case "reset": {
 			return initSquares;
 		}
 	}
 };
 
-const Editor: NextPage = () => {
+// Main ------------------------------------------------------------------------
+function Editor(): JSX.Element {
+	const { isMouseDown } = useMouseState();
+
 	const [squares, setSquares] = useReducer(squareReducer, initSquares);
 	const [editorMode, setEditorMode] = useState("Color");
 	const [targetColor, setTargetColor] = useState(false);
-
-	const { isMouseDown } = useMouseState();
 
 	//TODO Colors skip squares when the mouse moves too fast.
 	const handleMouseEvent = (id: number, click: boolean) => {
@@ -63,9 +83,29 @@ const Editor: NextPage = () => {
 		}
 	};
 
-	const handleDashboardEvent = (type: "reset") => {
+	const handleDashboardEvent = (type: "reset" | "numbers") => {
 		if (type === "reset") {
 			setSquares({ type: "reset" });
+		}
+
+		if (type === "numbers") {
+			// Regenerate numbers on the board
+			let currNum = 1;
+
+			for (let id = 0; id < 225; id++) {
+				if (squares[id]?.isBlack) continue;
+
+				const onTopEdge = id < 15 || squares[id - 15]?.isBlack;
+				const onLeftEdge = id % 15 === 0 || squares[id - 1]?.isBlack;
+
+				if (onTopEdge || onLeftEdge) {
+					setSquares({
+						type: "changeNumber",
+						payload: { id, newNum: currNum },
+					});
+					currNum++;
+				}
+			}
 		}
 	};
 
@@ -86,14 +126,15 @@ const Editor: NextPage = () => {
 			</main>
 		</>
 	);
-};
+}
 
+// Board -----------------------------------------------------------------------
 type BoardProps = {
 	squares: Square[];
 	handleMouseEvent: (id: number, click: boolean) => void;
 };
 
-const Board = ({ squares, handleMouseEvent }: BoardProps) => {
+function Board({ squares, handleMouseEvent }: BoardProps) {
 	const getSquareStyle = (i: number) => {
 		return cn({
 			"w-full h-full outline outline-1 outline-black font-bold": true,
@@ -122,13 +163,14 @@ const Board = ({ squares, handleMouseEvent }: BoardProps) => {
 			})}
 		</div>
 	);
-};
+}
 
+// Dashboard -------------------------------------------------------------------
 type DashboardProps = {
-	handleDashboardEvent: (type: "reset") => void;
+	handleDashboardEvent: (type: "reset" | "numbers") => void;
 };
 
-const Dashboard = ({ handleDashboardEvent }: DashboardProps) => {
+function Dashboard({ handleDashboardEvent }: DashboardProps) {
 	return (
 		<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow">
 			<div className="text-xl font-quicksand flex">
@@ -139,10 +181,15 @@ const Dashboard = ({ handleDashboardEvent }: DashboardProps) => {
 					Reset
 				</button>
 				<div className="w-5"></div>
-				<button className="border-b border-gray-700">Add Numbers</button>
+				<button
+					className="border-b border-gray-700"
+					onClick={() => handleDashboardEvent("numbers")}
+				>
+					Add Numbers
+				</button>
 			</div>
 		</div>
 	);
-};
+}
 
 export default Editor;
