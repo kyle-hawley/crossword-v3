@@ -7,6 +7,13 @@ import { useMouseState } from "../utils/useMouseState";
 import { type } from "os";
 import { isBoolean } from "lodash";
 
+// Helper functions that can be exported someday -------------------------------
+function isSingleLetter(c: string) {
+	// https://stackoverflow.com/questions/9862761/how-to-check-if-character-is-a-letter-in-javascript
+	// credit: mik01aj
+	return c.toLowerCase() !== c.toUpperCase() && c.length === 1;
+}
+
 // Visual state ----------------------------------------------------------------
 type Square = {
 	isBlack: boolean;
@@ -89,6 +96,21 @@ function Editor(): JSX.Element {
 		}
 	}
 
+	function handleKeyboardEvent(e: React.KeyboardEvent<HTMLDivElement>) {
+		if (selectedSquare === null) return;
+
+		if (e.key === "Tab") {
+			e.preventDefault();
+		} else if (e.key === "Backspace") {
+			// delete the letter and go backwards
+		} else if (isSingleLetter(e.key)) {
+			setSquares({
+				type: "changeLetter",
+				payload: { id: selectedSquare, newLetter: e.key.toUpperCase() },
+			});
+		}
+	}
+
 	function handleDashboardEvent(type: "reset" | "numbers" | "mode") {
 		if (type === "reset") {
 			setSquares({ type: "reset" });
@@ -141,12 +163,16 @@ function Editor(): JSX.Element {
 			</Head>
 
 			<main className="container mx-auto h-screen flex justify-center p-4">
-				<div className="flex items-center justify-center">
+				<div
+					className="flex items-center justify-center"
+					onKeyDown={(e) => handleKeyboardEvent(e)}
+				>
 					<Board
 						squares={squares}
 						selectedSquare={selectedSquare}
 						handleMouseEvent={handleMouseEvent}
 					></Board>
+
 					<div className="w-8"></div>
 					<Dashboard
 						editorMode={editorMode}
