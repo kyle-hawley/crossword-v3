@@ -65,8 +65,10 @@ function Editor(): JSX.Element {
 	const { isMouseDown } = useMouseState();
 
 	const [squares, setSquares] = useReducer(squareReducer, initSquares);
-	const [editorMode, setEditorMode] = useState("Color");
+	const [editorMode, setEditorMode] = useState<"Color" | "Words">("Color");
 	const [targetColor, setTargetColor] = useState(false);
+
+	const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
 
 	//TODO Colors skip squares when the mouse moves too fast.
 	const handleMouseEvent = (id: number, click: boolean) => {
@@ -81,11 +83,17 @@ function Editor(): JSX.Element {
 				setSquares({ type: "toggleColor", payload: { id } });
 			}
 		}
+
+		if (editorMode === "Words" && click) {
+			setSelectedSquare(id);
+		}
 	};
 
-	const handleDashboardEvent = (type: "reset" | "numbers") => {
+	const handleDashboardEvent = (type: "reset" | "numbers" | "mode") => {
 		if (type === "reset") {
 			setSquares({ type: "reset" });
+			setEditorMode("Color");
+			setSelectedSquare(null);
 		}
 
 		if (type === "numbers") {
@@ -107,6 +115,21 @@ function Editor(): JSX.Element {
 				}
 			}
 		}
+
+		if (type === "mode") {
+			if (editorMode === "Color") {
+				setEditorMode("Words");
+				// Find the first nonblack square.
+				for (let id = 0; id < 225; id++) {
+					if (squares[id]?.isBlack) continue;
+					setSelectedSquare(id);
+					break;
+				}
+			} else if (editorMode === "Words") {
+				setEditorMode("Color");
+				setSelectedSquare(null);
+			}
+		}
 	};
 
 	return (
@@ -119,9 +142,16 @@ function Editor(): JSX.Element {
 
 			<main className="container mx-auto h-screen flex justify-center p-4">
 				<div className="flex items-center justify-center">
-					<Board squares={squares} handleMouseEvent={handleMouseEvent}></Board>
+					<Board
+						squares={squares}
+						selectedSquare={selectedSquare}
+						handleMouseEvent={handleMouseEvent}
+					></Board>
 					<div className="w-8"></div>
-					<Dashboard handleDashboardEvent={handleDashboardEvent}></Dashboard>
+					<Dashboard
+						editorMode={editorMode}
+						handleDashboardEvent={handleDashboardEvent}
+					></Dashboard>
 				</div>
 			</main>
 		</>
@@ -131,16 +161,17 @@ function Editor(): JSX.Element {
 // Board -----------------------------------------------------------------------
 type BoardProps = {
 	squares: Square[];
+	selectedSquare: number | null;
 	handleMouseEvent: (id: number, click: boolean) => void;
 };
 
-function Board({ squares, handleMouseEvent }: BoardProps) {
-	const getSquareStyle = (i: number) => {
+function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
+	const getSquareStyle = (id: number) => {
 		return cn({
 			"w-full h-full outline outline-1 outline-black font-bold": true,
-			"bg-white": !squares[i]?.isBlack,
-			"bg-black": squares[i]?.isBlack,
-			// "bg-blue-300": i === selectedSquare,
+			"bg-white": !squares[id]?.isBlack,
+			"bg-black": squares[id]?.isBlack,
+			"bg-blue-300": id === selectedSquare,
 			// "bg-blue-100": false,
 		});
 	};
@@ -167,10 +198,11 @@ function Board({ squares, handleMouseEvent }: BoardProps) {
 
 // Dashboard -------------------------------------------------------------------
 type DashboardProps = {
-	handleDashboardEvent: (type: "reset" | "numbers") => void;
+	editorMode: string;
+	handleDashboardEvent: (type: "reset" | "numbers" | "mode") => void;
 };
 
-function Dashboard({ handleDashboardEvent }: DashboardProps) {
+function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
 	return (
 		<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow">
 			<div className="text-xl font-quicksand flex">
@@ -186,6 +218,13 @@ function Dashboard({ handleDashboardEvent }: DashboardProps) {
 					onClick={() => handleDashboardEvent("numbers")}
 				>
 					Add Numbers
+				</button>
+				<div className="w-5"></div>
+				<button
+					className="border-b border-gray-700"
+					onClick={() => handleDashboardEvent("mode")}
+				>
+					{editorMode}
 				</button>
 			</div>
 		</div>
