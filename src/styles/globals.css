@@ -9,8 +9,8 @@
 
 @layer utilities {
 	.debug {
-		border-style: solid;
-		border-width: 1px;
-		border-color: red;
+		outline-style: solid;
+		outline-width: 1px;
+		outline-color: red;
 	}
 }
