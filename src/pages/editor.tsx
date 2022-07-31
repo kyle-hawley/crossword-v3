@@ -168,7 +168,7 @@ type BoardProps = {
 function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 	const getSquareStyle = (id: number) => {
 		return cn({
-			"w-full h-full outline outline-1 outline-black font-bold": true,
+			"w-full h-full align-top outline outline-1 outline-black font-bold": true,
 			"bg-white": !squares[id]?.isBlack,
 			"bg-black": squares[id]?.isBlack,
 			"bg-blue-300": id === selectedSquare,
