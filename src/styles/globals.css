@@ -6,3 +6,11 @@
 	font-family: "Quicksand";
 	src: url("../../public/font/Quicksand-Regular.ttf");
 }
+
+@layer utilities {
+	.debug {
+		border-style: solid;
+		border-width: 1px;
+		border-color: red;
+	}
+}
