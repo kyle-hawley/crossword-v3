@@ -26,7 +26,7 @@ type SquareReducerActionTypes =
 	| { type: "changeLetter"; payload: { id: number; newLetter: string } }
 	| { type: "reset" };
 
-const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
+function squareReducer(state: Square[], action: SquareReducerActionTypes) {
 	switch (action.type) {
 		case "toggleColor": {
 			const newState = cloneDeep(state);
@@ -58,7 +58,7 @@ const squareReducer = (state: Square[], action: SquareReducerActionTypes) => {
 			return initSquares;
 		}
 	}
-};
+}
 
 // Main ------------------------------------------------------------------------
 function Editor(): JSX.Element {
@@ -71,7 +71,7 @@ function Editor(): JSX.Element {
 	const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
 
 	//TODO Colors skip squares when the mouse moves too fast.
-	const handleMouseEvent = (id: number, click: boolean) => {
+	function handleMouseEvent(id: number, click: boolean) {
 		if (editorMode === "Color") {
 			const square = squares[id];
 
@@ -87,9 +87,9 @@ function Editor(): JSX.Element {
 		if (editorMode === "Words" && click) {
 			setSelectedSquare(id);
 		}
-	};
+	}
 
-	const handleDashboardEvent = (type: "reset" | "numbers" | "mode") => {
+	function handleDashboardEvent(type: "reset" | "numbers" | "mode") {
 		if (type === "reset") {
 			setSquares({ type: "reset" });
 			setEditorMode("Color");
@@ -130,7 +130,7 @@ function Editor(): JSX.Element {
 				setSelectedSquare(null);
 			}
 		}
-	};
+	}
 
 	return (
 		<>
@@ -166,7 +166,7 @@ type BoardProps = {
 };
 
 function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
-	const getSquareStyle = (id: number) => {
+	function getSquareStyle(id: number) {
 		return cn({
 			"w-full h-full align-top outline outline-1 outline-black font-bold": true,
 			"bg-white": !squares[id]?.isBlack,
@@ -174,7 +174,7 @@ function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 			"bg-blue-300": id === selectedSquare,
 			// "bg-blue-100": false,
 		});
-	};
+	}
 
 	return (
 		<div className="w-[450px] h-[450px] grid grid-cols-15">
