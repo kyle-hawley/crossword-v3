@@ -1,11 +1,8 @@
-import type { NextPage } from "next";
 import Head from "next/head";
-import { useEffect, useReducer, useState } from "react";
+import { useReducer, useState } from "react";
 import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
 import { useMouseState } from "../utils/useMouseState";
-import { type } from "os";
-import { isBoolean } from "lodash";
 
 // Helper functions that can be exported someday -------------------------------
 function isSingleLetter(c: string) {
@@ -76,6 +73,7 @@ function Editor(): JSX.Element {
 	const [targetColor, setTargetColor] = useState(false);
 
 	const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
+	const [fillDir, setFillDir] = useState<"across" | "down">("across");
 
 	//TODO Colors skip squares when the mouse moves too fast.
 	function handleMouseEvent(id: number, click: boolean) {
@@ -97,17 +95,50 @@ function Editor(): JSX.Element {
 	}
 
 	function handleKeyboardEvent(e: React.KeyboardEvent<HTMLDivElement>) {
+		// Help functions that should prob be moved somewhere else someday.
+		function findNextSquare() {
+			if (fillDir === "across") {
+				let currId = selectedSquare! + 1;
+				while (true) {
+					if (currId > 224) currId = 0;
+					if (!squares[currId]?.isBlack) return currId;
+					currId++;
+				}
+			}
+			if (fillDir === "down") {
+				// do the next thing
+			}
+			return null; //TODO making typescript happy
+		}
+
+		function findPrevSquare() {
+			if (fillDir === "across") {
+				let currId = selectedSquare! - 1;
+				while (true) {
+					if (currId < 0) currId = 224;
+					if (!squares[currId]?.isBlack) return currId;
+					currId--;
+				}
+			}
+			return null; //TODO making typescript happy
+		}
+
 		if (selectedSquare === null) return;
 
-		if (e.key === "Tab") {
-			e.preventDefault();
-		} else if (e.key === "Backspace") {
-			// delete the letter and go backwards
-		} else if (isSingleLetter(e.key)) {
+		if (isSingleLetter(e.key)) {
 			setSquares({
 				type: "changeLetter",
 				payload: { id: selectedSquare, newLetter: e.key.toUpperCase() },
 			});
+			setSelectedSquare(findNextSquare());
+		} else if (e.key === "Tab") {
+			e.preventDefault();
+		} else if (e.key === "Backspace") {
+			setSquares({
+				type: "changeLetter",
+				payload: { id: selectedSquare, newLetter: " " },
+			});
+			setSelectedSquare(findPrevSquare());
 		}
 	}
 
