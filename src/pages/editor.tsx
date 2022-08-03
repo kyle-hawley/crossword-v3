@@ -262,31 +262,73 @@ type DashboardProps = {
 };
 
 function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
+	const [window, setWindow] = useState<"Controls" | "Words">("Controls");
+
 	return (
-		<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow">
-			<div className="text-xl font-quicksand flex">
+		<div className="flex flex-col">
+			<div>
 				<button
-					className="border-b border-gray-700"
-					onClick={() => handleDashboardEvent("reset")}
+					className="p-1 border-t border-l border-solid border-black"
+					onClick={() => setWindow("Controls")}
 				>
-					Reset
+					Controls
 				</button>
-				<div className="w-5"></div>
 				<button
-					className="border-b border-gray-700"
-					onClick={() => handleDashboardEvent("numbers")}
+					className="p-1 border-t border-l border-r border-black"
+					onClick={() => setWindow("Words")}
 				>
-					Add Numbers
-				</button>
-				<div className="w-5"></div>
-				<button
-					className="border-b border-gray-700"
-					onClick={() => handleDashboardEvent("mode")}
-				>
-					{editorMode}
+					{/* figure out these borders	*/}
+					Words
 				</button>
 			</div>
+			{window === "Controls" && (
+				<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow-lg">
+					<div className="text-xl font-quicksand flex">
+						<button
+							className="border-b border-gray-700"
+							onClick={() => handleDashboardEvent("reset")}
+						>
+							Reset
+						</button>
+						<div className="w-5"></div>
+						<button
+							className="border-b border-gray-700"
+							onClick={() => handleDashboardEvent("numbers")}
+						>
+							Add Numbers
+						</button>
+						<div className="w-5"></div>
+						<button
+							className="border-b border-gray-700"
+							onClick={() => handleDashboardEvent("mode")}
+						>
+							{editorMode}
+						</button>
+					</div>
+				</div>
+			)}
+			<div className="w-[500px] h-[300px] py-3 flex flex-col items-center overflow-y-scroll border border-black border-solid shadow-lg">
+				<div className="w-full px-3 py-1 flex justify-between">
+					<span>1</span>
+
+					<span>PIZZA</span>
+					<input
+						type={"text"}
+						className="w-[16rem] border border-solid border-black focus:outline-none"
+					></input>
+				</div>
+				<div className="w-full px-3 py-1 flex justify-between">
+					<span>2</span>
+
+					<span>GERONIMOAAAAAAA</span>
+					<input
+						type={"text"}
+						className="w-[16rem] border border-solid border-black focus:outline-none"
+					></input>
+				</div>
+			</div>
 		</div>
+		// Window
 	);
 }
 
