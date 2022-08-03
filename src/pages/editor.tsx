@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useReducer, useState } from "react";
 import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
+import clone from "lodash/clone";
 import { useMouseState } from "../utils/useMouseState";
 
 //TODO set up next auth and prisma db stuff to hopefully get rid of the slowness.
@@ -14,22 +15,22 @@ function isSingleLetter(c: string) {
 }
 
 // Visual state ----------------------------------------------------------------
+const initLetters: string[] = Array(225).fill(" ");
+
 type Square = {
 	isBlack: boolean;
 	num: number | null;
-	letter: string;
 };
 
 const initSquares: Square[] = [];
 for (let i = 0; i < 225; i++) {
-	const blankSquare: Square = { isBlack: false, num: null, letter: " " };
+	const blankSquare: Square = { isBlack: false, num: null };
 	initSquares.push(blankSquare);
 }
 
 type SquareReducerActionTypes =
 	| { type: "toggleColor"; payload: { id: number } }
 	| { type: "changeNumber"; payload: { id: number; newNum: number } }
-	| { type: "changeLetter"; payload: { id: number; newLetter: string } }
 	| { type: "reset" };
 
 function squareReducer(state: Square[], action: SquareReducerActionTypes) {
@@ -53,13 +54,6 @@ function squareReducer(state: Square[], action: SquareReducerActionTypes) {
 			newState[id]!.num = newNum;
 			return newState;
 		}
-		case "changeLetter": {
-			const newState = cloneDeep(state);
-			const { id, newLetter } = action.payload;
-
-			newState[id]!.letter = newLetter;
-			return newState;
-		}
 		case "reset": {
 			return initSquares;
 		}
@@ -71,6 +65,7 @@ function Editor(): JSX.Element {
 	const { isMouseDown } = useMouseState();
 
 	const [squares, setSquares] = useReducer(squareReducer, initSquares);
+	const [letters, setLetters] = useState(initLetters);
 	const [editorMode, setEditorMode] = useState<"Color" | "Words">("Color");
 	const [targetColor, setTargetColor] = useState(false);
 
@@ -110,7 +105,7 @@ function Editor(): JSX.Element {
 			if (fillDir === "down") {
 				// do the next thing
 			}
-			return null; //TODO making typescript happy
+			return null; // making typescript happy
 		}
 
 		function findPrevSquare() {
@@ -122,24 +117,24 @@ function Editor(): JSX.Element {
 					currId--;
 				}
 			}
-			return null; //TODO making typescript happy
+			return null; // making typescript happy
 		}
 
 		if (selectedSquare === null) return;
 
 		if (isSingleLetter(e.key)) {
-			setSquares({
-				type: "changeLetter",
-				payload: { id: selectedSquare, newLetter: e.key.toUpperCase() },
-			});
+			const newLetters = clone(letters);
+			newLetters[selectedSquare] = e.key.toUpperCase();
+			setLetters(newLetters);
+
 			setSelectedSquare(findNextSquare());
 		} else if (e.key === "Tab") {
 			e.preventDefault();
 		} else if (e.key === "Backspace") {
-			setSquares({
-				type: "changeLetter",
-				payload: { id: selectedSquare, newLetter: " " },
-			});
+			const newLetters = clone(letters);
+			newLetters[selectedSquare] = " "; // empty square
+			setLetters(newLetters);
+
 			setSelectedSquare(findPrevSquare());
 		}
 	}
@@ -202,6 +197,7 @@ function Editor(): JSX.Element {
 				>
 					<Board
 						squares={squares}
+						letters={letters}
 						selectedSquare={selectedSquare}
 						handleMouseEvent={handleMouseEvent}
 					></Board>
@@ -220,11 +216,17 @@ function Editor(): JSX.Element {
 // Board -----------------------------------------------------------------------
 type BoardProps = {
 	squares: Square[];
+	letters: string[];
 	selectedSquare: number | null;
 	handleMouseEvent: (id: number, click: boolean) => void;
 };
 
-function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
+function Board({
+	squares,
+	letters,
+	selectedSquare,
+	handleMouseEvent,
+}: BoardProps) {
 	function getSquareStyle(id: number) {
 		return cn({
 			"w-full h-full align-top outline outline-1 outline-black font-bold": true,
@@ -246,7 +248,7 @@ function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 							onMouseDown={() => handleMouseEvent(id, true)}
 							onMouseOver={() => handleMouseEvent(id, false)}
 						>
-							{square.letter}
+							{letters[id]}
 						</button>
 					</div>
 				);
