@@ -4,6 +4,8 @@ import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
 import { useMouseState } from "../utils/useMouseState";
 
+//TODO set up next auth and prisma db stuff to hopefully get rid of the slowness.
+
 // Helper functions that can be exported someday -------------------------------
 function isSingleLetter(c: string) {
 	// https://stackoverflow.com/questions/9862761/how-to-check-if-character-is-a-letter-in-javascript
