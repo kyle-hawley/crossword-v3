@@ -11,7 +11,7 @@ export const useMouseState = () => {
 		window.addEventListener("mousedown", setPrimaryButtonState);
 		window.addEventListener("mousemove", setPrimaryButtonState);
 		window.addEventListener("mouseup", setPrimaryButtonState);
-	});
+	}, []);
 
 	return { isMouseDown };
 };
