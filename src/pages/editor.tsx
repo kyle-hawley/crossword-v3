@@ -15,22 +15,22 @@ function isSingleLetter(c: string) {
 }
 
 // Visual state ----------------------------------------------------------------
-const initLetters: string[] = Array(225).fill(" ");
-
 type Square = {
 	isBlack: boolean;
 	num: number | null;
+	letter: string;
 };
 
 const initSquares: Square[] = [];
 for (let i = 0; i < 225; i++) {
-	const blankSquare: Square = { isBlack: false, num: null };
+	const blankSquare: Square = { isBlack: false, num: null, letter: " " };
 	initSquares.push(blankSquare);
 }
 
 type SquareReducerActionTypes =
 	| { type: "toggleColor"; payload: { id: number } }
 	| { type: "changeNumber"; payload: { id: number; newNum: number } }
+	| { type: "changeLetter"; payload: { id: number; newLetter: string } }
 	| { type: "reset" };
 
 function squareReducer(state: Square[], action: SquareReducerActionTypes) {
@@ -54,6 +54,13 @@ function squareReducer(state: Square[], action: SquareReducerActionTypes) {
 			newState[id]!.num = newNum;
 			return newState;
 		}
+		case "changeLetter": {
+			const newState = cloneDeep(state);
+			const { id, newLetter } = action.payload;
+
+			newState[id]!.letter = newLetter;
+			return newState;
+		}
 		case "reset": {
 			return initSquares;
 		}
@@ -65,7 +72,6 @@ function Editor(): JSX.Element {
 	const { isMouseDown } = useMouseState();
 
 	const [squares, setSquares] = useReducer(squareReducer, initSquares);
-	const [letters, setLetters] = useState(initLetters);
 	const [editorMode, setEditorMode] = useState<"Color" | "Words">("Color");
 	const [targetColor, setTargetColor] = useState(false);
 
@@ -91,51 +97,51 @@ function Editor(): JSX.Element {
 		}
 	}
 
+	// Help functions that should prob be moved somewhere else someday.
+	function findNextSquare() {
+		if (fillDir === "across") {
+			let currId = selectedSquare! + 1;
+			while (true) {
+				if (currId > 224) currId = 0;
+				if (!squares[currId]?.isBlack) return currId;
+				currId++;
+			}
+		}
+		if (fillDir === "down") {
+			// do the next thing
+		}
+		return null; // making typescript happy
+	}
+
+	function findPrevSquare() {
+		if (fillDir === "across") {
+			let currId = selectedSquare! - 1;
+			while (true) {
+				if (currId < 0) currId = 224;
+				if (!squares[currId]?.isBlack) return currId;
+				currId--;
+			}
+		}
+		return null; // making typescript happy
+	}
+
 	function handleKeyboardEvent(e: React.KeyboardEvent<HTMLDivElement>) {
-		// Help functions that should prob be moved somewhere else someday.
-		function findNextSquare() {
-			if (fillDir === "across") {
-				let currId = selectedSquare! + 1;
-				while (true) {
-					if (currId > 224) currId = 0;
-					if (!squares[currId]?.isBlack) return currId;
-					currId++;
-				}
-			}
-			if (fillDir === "down") {
-				// do the next thing
-			}
-			return null; // making typescript happy
-		}
-
-		function findPrevSquare() {
-			if (fillDir === "across") {
-				let currId = selectedSquare! - 1;
-				while (true) {
-					if (currId < 0) currId = 224;
-					if (!squares[currId]?.isBlack) return currId;
-					currId--;
-				}
-			}
-			return null; // making typescript happy
-		}
-
 		if (selectedSquare === null) return;
 
 		if (isSingleLetter(e.key)) {
-			const newLetters = clone(letters);
-			newLetters[selectedSquare] = e.key.toUpperCase();
-			setLetters(newLetters);
-
+			setSquares({
+				type: "changeLetter",
+				payload: { id: selectedSquare, newLetter: e.key.toUpperCase() },
+			});
 			setSelectedSquare(findNextSquare());
+		} else if (e.key === "Backspace") {
+			setSquares({
+				type: "changeLetter",
+				payload: { id: selectedSquare, newLetter: " " },
+			});
+			setSelectedSquare(findPrevSquare());
 		} else if (e.key === "Tab") {
 			e.preventDefault();
-		} else if (e.key === "Backspace") {
-			const newLetters = clone(letters);
-			newLetters[selectedSquare] = " "; // empty square
-			setLetters(newLetters);
-
-			setSelectedSquare(findPrevSquare());
 		}
 	}
 
@@ -197,7 +203,6 @@ function Editor(): JSX.Element {
 				>
 					<Board
 						squares={squares}
-						letters={letters}
 						selectedSquare={selectedSquare}
 						handleMouseEvent={handleMouseEvent}
 					></Board>
@@ -216,17 +221,11 @@ function Editor(): JSX.Element {
 // Board -----------------------------------------------------------------------
 type BoardProps = {
 	squares: Square[];
-	letters: string[];
 	selectedSquare: number | null;
 	handleMouseEvent: (id: number, click: boolean) => void;
 };
 
-function Board({
-	squares,
-	letters,
-	selectedSquare,
-	handleMouseEvent,
-}: BoardProps) {
+function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 	function getSquareStyle(id: number) {
 		return cn({
 			"w-full h-full align-top outline outline-1 outline-black font-bold": true,
@@ -248,7 +247,7 @@ function Board({
 							onMouseDown={() => handleMouseEvent(id, true)}
 							onMouseOver={() => handleMouseEvent(id, false)}
 						>
-							{letters[id]}
+							{squares[id]?.letter}
 						</button>
 					</div>
 				);
