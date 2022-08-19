@@ -230,7 +230,7 @@ function Editor(): JSX.Element {
 				{/* <link rel="icon" href="/favicon.ico" /> */}
 			</Head>
 
-			<main className="container mx-auto h-screen flex justify-center p-4">
+			<main className="container mx-auto flex h-screen justify-center p-4">
 				<div
 					className="flex items-center justify-center"
 					onKeyDown={(e) => handleKeyboardEvent(e)}
@@ -271,11 +271,11 @@ function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 	}
 
 	return (
-		<div className="w-[450px] h-[450px] grid grid-cols-15">
+		<div className="grid h-[450px] w-[450px] grid-cols-15">
 			{squares.map((square, id) => {
 				return (
 					<div key={id}>
-						<p className="absolute text-[10px] p-0 ml-[0.1rem]">{square.num}</p>
+						<p className="absolute ml-[0.1rem] p-0 text-[10px]">{square.num}</p>
 						<button
 							className={getSquareStyle(id)}
 							onMouseDown={() => handleMouseEvent(id, true)}
@@ -303,13 +303,13 @@ function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
 		<div className="flex flex-col">
 			<div>
 				<button
-					className="p-1 border-t border-l border-solid border-black"
+					className="border-t border-l border-solid border-black p-1"
 					onClick={() => setWindow("Controls")}
 				>
 					Controls
 				</button>
 				<button
-					className="p-1 border-t border-l border-r border-black"
+					className="border-t border-l border-r border-black p-1"
 					onClick={() => setWindow("Words")}
 				>
 					{/* figure out these borders	*/}
@@ -317,8 +317,8 @@ function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
 				</button>
 			</div>
 			{window === "Controls" && (
-				<div className="w-[500px] h-[300px] flex justify-center items-center border border-black border-solid shadow-lg">
-					<div className="text-xl font-quicksand flex">
+				<div className="flex h-[300px] w-[500px] items-center justify-center border border-solid border-black shadow-lg">
+					<div className="flex font-quicksand text-xl">
 						<button
 							className="border-b border-gray-700"
 							onClick={() => handleDashboardEvent("reset")}
@@ -342,8 +342,8 @@ function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
 					</div>
 				</div>
 			)}
-			<div className="w-[500px] h-[300px] py-3 flex flex-col items-center overflow-y-scroll border border-black border-solid shadow-lg">
-				<div className="w-full px-3 py-1 flex justify-between">
+			<div className="flex h-[300px] w-[500px] flex-col items-center overflow-y-scroll border border-solid border-black py-3 shadow-lg">
+				<div className="flex w-full justify-between px-3 py-1">
 					<span>1</span>
 
 					<span>PIZZA</span>
@@ -352,7 +352,7 @@ function Dashboard({ editorMode, handleDashboardEvent }: DashboardProps) {
 						className="w-[16rem] border border-solid border-black focus:outline-none"
 					></input>
 				</div>
-				<div className="w-full px-3 py-1 flex justify-between">
+				<div className="flex w-full justify-between px-3 py-1">
 					<span>2</span>
 
 					<span>GERONIMOAAAAAAA</span>
