@@ -2,7 +2,6 @@ import Head from "next/head";
 import { useReducer, useState } from "react";
 import cn from "classnames";
 import cloneDeep from "lodash/cloneDeep";
-import clone from "lodash/clone";
 import { useMouseState } from "../utils/useMouseState";
 
 //TODO set up next auth and prisma db stuff to hopefully get rid of the slowness.
@@ -18,19 +17,30 @@ function isSingleLetter(c: string) {
 type Square = {
 	isBlack: boolean;
 	num: number | null;
+	acrossNum: number | null;
+	downNum: number | null;
 	letter: string;
 };
 
 const initSquares: Square[] = [];
 for (let i = 0; i < 225; i++) {
-	const blankSquare: Square = { isBlack: false, num: null, letter: " " };
+	const blankSquare: Square = {
+		isBlack: false,
+		num: null,
+		acrossNum: null,
+		downNum: null,
+		letter: " ",
+	};
 	initSquares.push(blankSquare);
 }
 
 type SquareReducerActionTypes =
 	| { type: "toggleColor"; payload: { id: number } }
-	| { type: "changeNumber"; payload: { id: number; newNum: number } }
-	| { type: "changeLetter"; payload: { id: number; newLetter: string } }
+	| {
+			type: "setNum";
+			payload: { id: number; newNum: number; across: boolean; down: boolean };
+	  }
+	| { type: "setLetter"; payload: { id: number; newLetter: string } }
 	| { type: "reset" };
 
 function squareReducer(state: Square[], action: SquareReducerActionTypes) {
@@ -47,14 +57,31 @@ function squareReducer(state: Square[], action: SquareReducerActionTypes) {
 
 			return newState;
 		}
-		case "changeNumber": {
+		case "setNum": {
 			const newState = cloneDeep(state);
-			const { id, newNum } = action.payload;
+			const { id, newNum, across, down } = action.payload;
 
 			newState[id]!.num = newNum;
+
+			if (across) {
+				for (let i = 0; i < 15 - (id % 15); i++) {
+					if (newState[id + i]?.isBlack) break;
+					newState[id + i]!.acrossNum = newNum;
+				}
+			}
+
+			// if (down) {
+			// 	for (let i = 0; i < 225; i + 15) {
+			// 		if (newState[id + i]?.isBlack) break;
+			// 		if (id + i > 224) break;
+
+			// 		newState[id + i]!.downNum = newNum;
+			// 	}
+			// }
+
 			return newState;
 		}
-		case "changeLetter": {
+		case "setLetter": {
 			const newState = cloneDeep(state);
 			const { id, newLetter } = action.payload;
 
@@ -97,7 +124,7 @@ function Editor(): JSX.Element {
 		}
 	}
 
-	// Help functions that should prob be moved somewhere else someday.
+	// Helper functions that should prob be moved somewhere else someday----------
 	function findNextSquare() {
 		if (fillDir === "across") {
 			let currId = selectedSquare! + 1;
@@ -124,19 +151,20 @@ function Editor(): JSX.Element {
 		}
 		return null; // making typescript happy
 	}
+	//----------------------------------------------------------------------------
 
 	function handleKeyboardEvent(e: React.KeyboardEvent<HTMLDivElement>) {
 		if (selectedSquare === null) return;
 
 		if (isSingleLetter(e.key)) {
 			setSquares({
-				type: "changeLetter",
+				type: "setLetter",
 				payload: { id: selectedSquare, newLetter: e.key.toUpperCase() },
 			});
 			setSelectedSquare(findNextSquare());
 		} else if (e.key === "Backspace") {
 			setSquares({
-				type: "changeLetter",
+				type: "setLetter",
 				payload: { id: selectedSquare, newLetter: " " },
 			});
 			setSelectedSquare(findPrevSquare());
@@ -153,7 +181,7 @@ function Editor(): JSX.Element {
 		}
 
 		if (type === "numbers") {
-			// Regenerate numbers on the board
+			// Generate numbers on the board
 			let currNum = 1;
 
 			for (let id = 0; id < 225; id++) {
@@ -164,9 +192,15 @@ function Editor(): JSX.Element {
 
 				if (onTopEdge || onLeftEdge) {
 					setSquares({
-						type: "changeNumber",
-						payload: { id, newNum: currNum },
+						type: "setNum",
+						payload: {
+							id,
+							newNum: currNum,
+							across: onLeftEdge === true,
+							down: onTopEdge === true,
+						},
 					});
+
 					currNum++;
 				}
 			}
@@ -247,7 +281,7 @@ function Board({ squares, selectedSquare, handleMouseEvent }: BoardProps) {
 							onMouseDown={() => handleMouseEvent(id, true)}
 							onMouseOver={() => handleMouseEvent(id, false)}
 						>
-							{squares[id]?.letter}
+							{id}
 						</button>
 					</div>
 				);
